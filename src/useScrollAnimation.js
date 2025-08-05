@@ -1,30 +1,33 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-export function useScrollAnimation() {
+export default function useScrollAnimation() {
+  const [inView, setInView] = useState(false);
+  const ref = useRef();
+
   useEffect(() => {
-    const sections = document.querySelectorAll('section');
-
     const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.unobserve(entry.target);
+        }
       },
       {
         threshold: 0.1,
       }
     );
 
-    sections.forEach((section) => {
-      observer.observe(section);
-    });
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
 
+    const node = ref.current;
     return () => {
-      sections.forEach((section) => {
-        observer.unobserve(section);
-      });
+      if (node) {
+        observer.unobserve(node);
+      }
     };
   }, []);
+
+  return { ref, inView };
 }
